@@ -1,7 +1,9 @@
 # MuKoe
 
+MuKoe is an implementation of MuZero using Ray as the distributed orchestrator on GKE. We provide examples with Atari.
+
 ## Environment setup
-To set up the software environment used in Mukoe, feel free to utilize our provided [docker](docker/) files and scripts to build both the CPU and TPU docker images:
+To set up the software environment used in MuKoe, feel free to utilize our provided [docker](docker/) files and scripts to build both the CPU and TPU docker images:
 
 ```
 ./scripts/build_docker.sh $GCP_PROJECT_ID all
@@ -22,9 +24,9 @@ To teardown the cluster, you can do so with
 ray down -y cluster/mukoe.yaml
 ```
 
-## Instructions to run Mukoe
+## Instructions to run MuKoe
 
-Once your Ray cluster is setup, you can run Mukoe as a Ray job.
+Once your Ray cluster is setup, you can run MuKoe as a Ray job.
 
 ### Required and Expected Resources
 
@@ -119,7 +121,7 @@ WIP
 - Wendy Shang: main contributor, MuZero algorithm implementation and ray integration. 
 - Stephen Roller, Myle Ott: collaborators, infra support 
 
-### Google
+### Google:
 
 - Allen Wang: main contributor for Ray core integrations, TPU batchers, cluster setup
 - Jingxin Ye: main contributor for initial Ray-job based prototype
@@ -132,7 +134,7 @@ This work is built upon a collection of previous efforts, by many predecessors i
 - Google Research Zurich Learn to Google Project `https://github.com/google-research/google-research/tree/master/muzero`
 - Google Deepmind Applied (Miaosen Wang, Flora Xue, Chenjie Gu) `https://arxiv.org/abs/2202.06626`
 
-### Project Name: Mukoe
+### Project Name: MuKoe
 The name Mu is derived from the algorithm we have re-implemented, known as MuZero. This title encompasses various nuanced meanings, as elaborated in [author note](https://www.furidamu.org/blog/2020/12/22/muzero-intuition/). Notably, in Japanese, the kanji Mu, 夢, translates to "dream."
 
 The component Ko, as in Kou 光, signifies "light," symbolizing our orchestrator framework named Ray, akin to a ray of light.
