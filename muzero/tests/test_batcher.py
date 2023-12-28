@@ -1,11 +1,11 @@
-"""Tests for batcher.py
+"""Tests for batching/batcher.py
 Run this with:
-python3 -m pytest -v -rP  muzero/batching/batcher_test.py
+python3 -m pytest -v -rP tests/test_batcher.py
 """
 import pytest
 import ray
 import sys
-from muzero.batching.batcher import RequestBatcher
+from batching.batcher import RequestBatcher
 
 
 def test_basic_usage():
