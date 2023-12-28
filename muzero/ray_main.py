@@ -7,6 +7,7 @@ import reverb
 from ray_reverb import RayReverbServer
 import config
 
+import event_logger
 from ray_muzero_actor import RayMuzeroActor
 from ray_train import RayTpuTrainer
 from ray_inference import RayInferenceActor
@@ -14,6 +15,7 @@ from ray_inference import RayInferenceActor
 TPU_ID_REPR = "inference_v4_8_repr"
 TPU_ID_DYNA = "inference_v4_8_dyna"
 _CPU_RESOURCE_STR = "inference_cpu_handler"
+_EVENT_LOGGER_FREQUENCY = 5
 
 
 def setup_loggers():
@@ -156,6 +158,7 @@ class MuzeroRunner:
         if "trainer" not in ray.available_resources():
             raise ValueError("While initializing, could not find a trainer resource.")
         try:
+            event_logger.initialize()
             self.start_reverb()
             self.start_learner()
             self.start_inference()
@@ -185,8 +188,12 @@ class MuzeroRunner:
     def run_until_completion(self):
         results = []
         futures, futures_to_actors = self._start_runs()
+        event_logger_counter = 0
         while futures:
+            event_logger_counter += 1
             done_futures, futures = ray.wait(futures, timeout=5)
+            if event_logger_counter % _EVENT_LOGGER_FREQUENCY == 0:
+                event_logger.summary()
             if not done_futures:
                 continue
             for future in done_futures:
@@ -233,6 +240,7 @@ def main(args: argparse.ArgumentParser):
     logging.info("Connecting to the Ray cluster.")
 
     ray.init(runtime_env=dict(worker_process_setup_hook=setup_loggers))
+
     logging.info("Available Ray resources: %s", ray.available_resources())
     logging.info("All Ray resources: %s", ray.cluster_resources())
 

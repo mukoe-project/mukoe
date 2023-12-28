@@ -10,6 +10,7 @@ import ray
 import time
 import logging
 import uuid
+import event_logger
 from ray.util.queue import Queue
 import asyncio
 from typing import Any, Callable, Iterable, List, Mapping, Optional
@@ -38,6 +39,10 @@ def _batcher_task(
     logging.debug("Starting batcher process...")
     print("Starting batcher process")
 
+    event_logger.event_start(
+        owner_name=f"Batcher",
+        event_category="build_batch",
+    )
     while True:
         start_time = time.time()
         batch = []
@@ -64,9 +69,21 @@ def _batcher_task(
                 else:
                     continue
         if batch:
+            event_logger.event_stop(
+                owner_name=f"Batcher",
+                event_category="build_batch",
+            )
             result = (batch, id_batch)
             logging.debug("Putting in tuple %s into the batch queue", result)
+            event_logger.event_start(
+                owner_name=f"Batcher",
+                event_category="batch_transmit",
+            )
             batch_queue.put(result)
+            event_logger.event_start(
+                owner_name=f"Batcher",
+                event_category="build_batch",
+            )
 
 
 @ray.remote
@@ -96,14 +113,33 @@ def _batch_processor_task(
     while True:
         try:
             batch, id_batch = batch_queue.get()
+            event_logger.event_stop(
+                owner_name=f"Batcher",
+                event_category="batch_transmit",
+            )
             logging.debug("Running batch processor...")
             print("Running batch processor...")
-
+            event_logger.event_start(
+                owner_name=f"Batcher",
+                event_category="batch_process",
+            )
             results = batch_processor(batch)
+            event_logger.event_stop(
+                owner_name=f"Batcher",
+                event_category="batch_process",
+            )
             print("Post processing results")
+            event_logger.event_start(
+                owner_name=f"Batcher",
+                event_category="batch_postprocess",
+            )
             for result, request_id in zip(results, id_batch):
                 logging.debug("Writing end results: %s, %s", result, request_id)
                 result_map.set.remote(k=request_id, v=result)
+            event_logger.event_stop(
+                owner_name=f"Batcher",
+                event_category="batch_postprocess",
+            )
             print("Done postprocessing batch.")
         except ray.util.queue.Empty as e:
             logging.debug("Caught exception: %s", e)

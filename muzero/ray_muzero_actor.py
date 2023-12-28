@@ -117,6 +117,7 @@ class RayMuzeroActor:
 
         mz_actor = MzActor(
             network=model,
+            actor_id=self.actor_id,
             observation_spec=input_specs,
             rng=key1,
             ckpt_dir=self.ckpt_dir,

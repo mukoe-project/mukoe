@@ -46,16 +46,6 @@ class RayInferenceActor:
             self._actor_def = None
             print("Invalid model provided...")
 
-    def live(self) -> bool:
-        if not self._shards:
-            # Init has probably not started yet
-            return True
-        try:
-            shards_live = ray.get([shard.live.remote()] for shard in self._shards)
-            return all(shards_live)
-        except Exception:
-            return False
-
     def initialize(self):
         if not self.actor_def:
             raise ValueError("Actor def is not defined. Check the provided model.")
@@ -68,7 +58,7 @@ class RayInferenceActor:
         print("Number of hosts: ", num_hosts)
         self._shards = [
             self.actor_def.options(
-                max_concurrency=2, resources={self.tpu_id: 1, "TPU": 4}
+                resources={"TPU": 4}
             ).remote(ckpt_dir=self.ckpt_dir)
             for _ in range(num_hosts)
         ]
@@ -121,9 +111,6 @@ class RayInferenceShardBase:
         """Ray-based Dynamic inferencer."""
         self.ckpt_dir = ckpt_dir
         self._skip_checkpoint = skip_checkpoint
-
-    def live(self) -> bool:
-        return True
 
     def update_weights(self) -> None:
         print("beginning weight update")

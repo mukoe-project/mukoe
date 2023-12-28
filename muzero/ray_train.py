@@ -138,9 +138,6 @@ class RayTrainerShard:
         self.tensorboard_dir = tensorboard_dir
         self.environment_name = environment_name
 
-    def live(self) -> bool:
-        return True
-
     def initialize(self):
         try:
             print("Initializing RayTrainerShard. Environment ", os.environ)

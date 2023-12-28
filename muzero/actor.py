@@ -12,6 +12,7 @@ import jax_types
 from mcts import base as mcts_base
 from mcts import l2g_mcts
 from mcts import utils as mcts_utils
+import event_logger
 import networks
 import adder
 import utils
@@ -35,6 +36,7 @@ class MzActor:
         self,
         network: networks.MzNet,
         observation_spec: specs.Array,
+        actor_id: int,
         rng: jax_types.PRNGKey,
         ckpt_dir: str,
         ckpt_save_interval_steps: int,
@@ -60,6 +62,7 @@ class MzActor:
             mcts samples from the child nodes' count probabilities.
           total_training_steps: The total number of training steps.
         """
+        self.actor_id = actor_id
 
         self._rng = rng
         self._ckpt_save_interval_steps = ckpt_save_interval_steps
@@ -197,7 +200,12 @@ class MzActor:
           are saved as numpy.ndarray.
         """
         if self._inference_repr_actor is not None:
-            logging.info("Making request to inference actor...")
+            if self.actor_id == 0:
+                event_logger.event_start(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="tpu_repr_and_pred",
+                )
+                logging.info("Making request to inference actor...")
             try:
                 obs = np.asarray(obs)
                 obs = array_encode_decode.ndarray_to_bytes(obs)
@@ -217,13 +225,28 @@ class MzActor:
             except Exception as e:
                 print("Failed accessing repr actor with ", e)
                 raise e
+            if self.actor_id == 0:
+                event_logger.event_stop(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="tpu_repr_and_pred",
+                )
         else:
+            if self.actor_id == 0:
+                event_logger.event_start(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="jitted_repr_and_pred",
+                )
             model_params_states = self._get_model_params_states()
             rp_net_out = self._jitted_repr_and_pred(
                 {"params": model_params_states["params"]}, obs
             )
             embedding = rp_net_out[0]
             pred_out = self._get_prediction_fn_output(rp_net_out[1])
+            if self.actor_id == 0:
+                event_logger.event_stop(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="jitted_repr_and_pred",
+                )
         return embedding, pred_out
 
     def _dyna_and_pred(
@@ -245,6 +268,11 @@ class MzActor:
         if self._inference_dyna_actor is not None:
             logging.info("Making request to inference actor...")
             # no axis dim
+            if self.actor_id == 0:
+                event_logger.event_start(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="tpu_dyna_and_pred",
+                )
             embedding = array_encode_decode.ndarray_to_bytes(embedding)
             action = array_encode_decode.ndarray_to_bytes(action)
             handle = ray.get(self._inference_dyna_actor.put.remote((embedding, action)))
@@ -257,12 +285,27 @@ class MzActor:
                 else:
                     pred_out[k] = convert(dp_net_out[k])
             pred_out = self._get_prediction_fn_output(pred_out)
+            if self.actor_id == 0:
+                event_logger.event_stop(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="tpu_dyna_and_pred",
+                )
         else:
+            if self.actor_id == 0:
+                event_logger.event_start(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="jitted_dyna_and_pred",
+                )
             dp_net_out = self._jitted_dyna_and_pred(
                 {"params": model_params_states["params"]}, embedding, action
             )
             embedding = dp_net_out[0]
             pred_out = self._get_prediction_fn_output(dp_net_out[1])
+            if self.actor_id == 0:
+                event_logger.event_stop(
+                    owner_name=f"MzActor-{self.actor_id}",
+                    event_category="jitted_dyna_and_pred",
+                )
         return embedding, pred_out
 
     def update(self) -> None:
