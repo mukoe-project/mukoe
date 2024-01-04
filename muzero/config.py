@@ -21,30 +21,30 @@ class TrainConfig:
 
     td_steps: int = 10
     num_unroll_steps: int = 5
-    batchsize: int = 512
-    total_training_steps: int = 1_000_000
-    log_period: int = 10
-    ckpt_save_interval_steps: int = 100
+    #batchsize: int = 512
+    #total_training_steps: int = 1_000_000
+    #log_period: int = 10
+    #ckpt_save_interval_steps: int = 100
     # TEST:
-    # batchsize: int = 8
-    # log_period: int = 1
-    # total_training_steps: int = 100
-    # ckpt_save_interval_steps: int = 4
+    batchsize: int = 8
+    log_period: int = 1
+    total_training_steps: int = 100
+    ckpt_save_interval_steps: int = 4
 
 
 @dataclasses.dataclass
 class ReplayConfig:
     """training configuration for MZ."""
 
-    replay_sequence_length: int = 160
-    max_replay_size: int = 100000
-    min_fill_fraction: float = 0.01
-    samples_per_insert: int = 8
+    #replay_sequence_length: int = 160
+    #max_replay_size: int = 100000
+    #min_fill_fraction: float = 0.01
+    #samples_per_insert: int = 8
     # TEST:
-    # replay_sequence_length: int = 120
-    # max_replay_size: int = 320000
-    # min_fill_fraction: int = 0.0001
-    # samples_per_insert: int = 1
+    replay_sequence_length: int = 120
+    max_replay_size: int = 320000
+    min_fill_fraction: int = 0.0001
+    samples_per_insert: int = 1
 
 
 @dataclasses.dataclass

@@ -20,27 +20,19 @@ python ray_main.py --ckpt_dir=/home/wendy/ray-train-test-pong/ckpt --tensorboard
 """
 
 parser = argparse.ArgumentParser(
-    prog="Ray-RL-Demo", description="Our amazing MuZero implementation on Ray x TPUs!"
-)
-parser.add_argument(
-    "--ckpt_dir", action="store", default="/home/wendy/ray-train-test-pong/ckpt"
-)
-parser.add_argument(
-    "--save_dir", action="store", default=f"/home/{getpass.getuser()}/ray-train"
-)
-parser.add_argument(
-    "--tensorboard_dir",
-    action="store",
-    default="/home/wendy/ray-train-test-pong/tensorboard",
-)
-parser.add_argument(
-    "--reverb_dir", action="store", default="/home/wendy/ray-train-test-pong/reverb"
-)
+    prog="Ray-RL-Demo",
+    description="Our amazing MuZero implementation on Ray x TPUs!")
+parser.add_argument("--ckpt_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/ckpt")
+parser.add_argument("--save_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/log")
+parser.add_argument("--tensorboard_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/tensorboard")
+parser.add_argument("--reverb_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/reverb")
+#parser.add_argument("--num_actors", action="store", type=int, default=600)
 parser.add_argument("--num_actors", action="store", type=int, default=20)
-# parser.add_argument("--num_actors", action="store", type=int, default=250)
-parser.add_argument("--core_per_task", action="store", type=int, default=16)
+#parser.add_argument("--core_per_task", action="store", type=int, default=16)
+parser.add_argument("--core_per_task", action="store", type=int, default=1)
 parser.add_argument("--environment", action="store", default="Pong")
-parser.add_argument("--inference_node", action="store", default="cpu")
+#parser.add_argument("--inference_node", action="store", default="cpu")
+parser.add_argument("--inference_node", action="store", default="tpu")
 
 args = parser.parse_args()
 
@@ -105,6 +97,8 @@ class MuzeroRunner:
                 ckpt_dir=args.ckpt_dir,
                 batch_size=inference_config.dyna_batch_size,
                 batch_timeout_s=inference_config.dyna_time_out,
+                model="dyna",
+                tpu_id= TPU_ID_DYNA,
             )
             self.inference_actor_repr = RayInferenceActor.options(
                 resources={_CPU_RESOURCE_STR: 0.1}
@@ -112,6 +106,8 @@ class MuzeroRunner:
                 ckpt_dir=args.ckpt_dir,
                 batch_size=inference_config.repr_batch_size,
                 batch_timeout_s=inference_config.repr_time_out,
+                model="repr",
+                tpu_id= TPU_ID_REPR,
             )
             logging.info("Initializing inferencer")
             inference_dyna_init_handle = self.inference_actor_dyna.initialize.remote()
