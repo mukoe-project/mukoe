@@ -96,15 +96,15 @@ def _batch_processor_task(
     while True:
         try:
             batch, id_batch = batch_queue.get()
-            logging.debug("Running batch processor...")
-            print("Running batch processor...")
+            #logging.debug("Running batch processor...")
+            #print("Running batch processor...")
 
             results = batch_processor(batch)
-            print("Post processing results")
+            #print("Post processing results")
             for result, request_id in zip(results, id_batch):
                 logging.debug("Writing end results: %s, %s", result, request_id)
                 result_map.set.remote(k=request_id, v=result)
-            print("Done postprocessing batch.")
+            #print("Done postprocessing batch.")
         except ray.util.queue.Empty as e:
             logging.debug("Caught exception: %s", e)
 
@@ -185,11 +185,15 @@ class RequestBatcher:
             target_batch_size=self.batch_size,
             timeout_in_s=self.batch_timeout_s,
         )
+        print("Done Creating the Request Batcher handle")
+        logging.info("Done Creating the Request Batcher handle")
         self._batch_processor_task_handle = _batch_processor_task.remote(
             batch_queue=self._batch_queue,
             result_map=self._result_map,
             batch_processor=self.batch_handler_fn,
         )
+        print("Done Creating the Request Batcher handle processor")
+        logging.info("Done Creating the Request Batcher handle processor")
 
     def put(self, input: Any) -> str:
         """Adds a new request to the batcher.

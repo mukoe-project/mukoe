@@ -76,6 +76,9 @@ class MuzeroRunner:
                 ckpt_dir=args.ckpt_dir,
                 batch_size=inference_config.dyna_batch_size,
                 batch_timeout_s=inference_config.dyna_time_out,
+                model="dyna",
+                tpu_id= TPU_ID_DYNA,
+                weight_update_interval=inference_config.dyna_update_interval,
             )
             self.inference_actor_repr = RayInferenceActor.options(
                 resources={_CPU_RESOURCE_STR: 0.1}
@@ -83,6 +86,9 @@ class MuzeroRunner:
                 ckpt_dir=args.ckpt_dir,
                 batch_size=inference_config.repr_batch_size,
                 batch_timeout_s=inference_config.repr_time_out,
+                model="repr",
+                tpu_id= TPU_ID_REPR,
+                weight_update_interval=inference_config.repr_update_interval,
             )
             logging.info("Initializing inferencer")
             inference_dyna_init_handle = self.inference_actor_dyna.initialize.remote()

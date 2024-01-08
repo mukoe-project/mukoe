@@ -78,10 +78,14 @@ class RayInferenceActor:
             batch_size=self.batch_size,
             batch_timeout_s=self.batch_timeout_s,
         )
+        logging.info("START init handles")
+        print("START init handles")
         ray.get(init_handles)
+        logging.info("GOT init handles")
+        print("GOT init handles")
 
     def process_batch(self, inputs: Iterable[Any]):
-        print("Processing batch")
+        #print("Processing batch")
         try:
             if (
                 self.step_counter > 0
@@ -89,7 +93,10 @@ class RayInferenceActor:
             ):
                 print("updating weights")
                 start_time = time.time()
-                ray.get([shard.update_weights.remote() for shard in self._shards])
+                update_weight_results = ray.get([shard.update_weights.remote() for shard in self._shards])
+                for r in update_weight_results:
+                    if not r:
+                        raise ValueError("Weight update failed")
                 print(f"update weight time time {time.time() - start_time}s")
             results = ray.get(
                 [shard.handle_batch.remote(inputs) for shard in self._shards]
@@ -125,18 +132,20 @@ class RayInferenceShardBase:
     def live(self) -> bool:
         return True
 
-    def update_weights(self) -> None:
+    def update_weights(self) -> bool:
         print("beginning weight update")
         all_steps = self._ckpt_manager.all_steps(read=True)
         latest_step = max(all_steps) if all_steps else None
         logging.info(f"actor latest_ckpt_step={latest_step}")
         print(f"actor latest_ckpt_step={latest_step}")
+        if self.step == latest_step:
+            return True
         self.step = latest_step
         if latest_step:
-            count_try = 0
+            #count_try = 0
             while True:
-                if count_try > 3:
-                    return False
+                #if count_try > 3:
+                #    return False
                 try:
                     print("Trying to restore checkpoint")
                     restored = self._ckpt_manager.restore(latest_step)
@@ -210,6 +219,7 @@ class RayDynaInferenceShard(RayInferenceShardBase):
         if latest_step is None:
             latest_step = 0
             print(f"need to load actor latest_ckpt_step={latest_step}")
+        self.step = latest_step
         while True:
             try:
                 restored = self._ckpt_manager.restore(latest_step)

@@ -197,12 +197,12 @@ class MzActor:
           are saved as numpy.ndarray.
         """
         if self._inference_repr_actor is not None:
-            logging.info("Making request to inference actor...")
+            #logging.info("Making repr_and_dyna request to inference actor...")
             try:
                 obs = np.asarray(obs)
                 obs = array_encode_decode.ndarray_to_bytes(obs)
                 handle = ray.get(self._inference_repr_actor.put.remote((obs)))
-                print("Getting response from repr actor...")
+                #print("Getting response from repr actor...")
                 repr_net_out = ray.get(self._inference_repr_actor.get.remote(handle))
                 embedding = convert(repr_net_out["embedding"])
                 pred_out = {}
@@ -243,7 +243,7 @@ class MzActor:
         action = action[jnp.newaxis,]  #  [1,]
         model_params_states = self._get_model_params_states()
         if self._inference_dyna_actor is not None:
-            logging.info("Making request to inference actor...")
+            # logging.info("Making dyna_and_repr request to inference actor...")
             # no axis dim
             embedding = array_encode_decode.ndarray_to_bytes(embedding)
             action = array_encode_decode.ndarray_to_bytes(action)

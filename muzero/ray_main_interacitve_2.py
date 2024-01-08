@@ -27,7 +27,7 @@ parser.add_argument("--save_dir", action="store", default="/home/wendy/ray-train
 parser.add_argument("--tensorboard_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/tensorboard")
 parser.add_argument("--reverb_dir", action="store", default="/home/wendy/ray-train-test-pong-mukoe/reverb")
 #parser.add_argument("--num_actors", action="store", type=int, default=600)
-parser.add_argument("--num_actors", action="store", type=int, default=20)
+parser.add_argument("--num_actors", action="store", type=int, default=5)
 #parser.add_argument("--core_per_task", action="store", type=int, default=16)
 parser.add_argument("--core_per_task", action="store", type=int, default=1)
 parser.add_argument("--environment", action="store", default="Pong")
@@ -99,6 +99,7 @@ class MuzeroRunner:
                 batch_timeout_s=inference_config.dyna_time_out,
                 model="dyna",
                 tpu_id= TPU_ID_DYNA,
+                weight_update_interval=inference_config.dyna_update_interval,
             )
             self.inference_actor_repr = RayInferenceActor.options(
                 resources={_CPU_RESOURCE_STR: 0.1}
@@ -108,11 +109,17 @@ class MuzeroRunner:
                 batch_timeout_s=inference_config.repr_time_out,
                 model="repr",
                 tpu_id= TPU_ID_REPR,
+                weight_update_interval=inference_config.repr_update_interval,
             )
             logging.info("Initializing inferencer")
+            print("Initializing inferencer")
             inference_dyna_init_handle = self.inference_actor_dyna.initialize.remote()
             inference_repr_init_handle = self.inference_actor_repr.initialize.remote()
+            logging.info("Waiting to get handle...")
+            print("Waiting to get handle...")
             ray.get([inference_dyna_init_handle, inference_repr_init_handle])
+            logging.info("Done getting handle...")
+            print("Done getting handle...")
         elif args.inference_node == "cpu":
             self.inference_actor_dyna = None
             self.inference_actor_repr = None
@@ -121,7 +128,8 @@ class MuzeroRunner:
 
     def start_muzero_actor(self, actor_i: int):
         args = self.args
-        if actor_i % 100 == 0:
+        #if actor_i % 100 == 0:
+        if actor_i % 1 == 0:
             action_i_save_dir = (
                 ""  # this is the dir to save log, TODO(wendyshang): add dir
             )

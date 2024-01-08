@@ -52,11 +52,11 @@ class InferenceConfig:
     """training configuration for MZ."""
 
     dyna_batch_size: int = 16
-    repr_batch_size: int = 4
+    repr_batch_size: int = 8
     dyna_time_out: float = 0.01
-    repr_time_out: float = 0.01
-    dyna_update_interval: int = 256
-    repr_update_interval: int = 32
+    repr_time_out: float = 0.05
+    dyna_update_interval: int = 16000000 # repr_update_interval * num_simulations in mcts/utils.py
+    repr_update_interval: int = 3200000
 
 
 @dataclasses.dataclass
